@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: fintech_postgres
+    environment:
+      POSTGRES_DB: fintech_disbursements
+      POSTGRES_USER: fintech_user
+      POSTGRES_PASSWORD: fintech_pass123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fintech_user -d fintech_disbursements"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: fintech_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fintech_api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: fintech_disbursements
+      DATABASE_USER: fintech_user
+      DATABASE_PASSWORD: fintech_pass123
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      INTERBANK_API_URL: http://mock-interbank:8080
+      INTERBANK_API_KEY: demo-api-key
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src:/app/src
+      - ./test:/app/test
+    command: npm run start:dev
+
+  mock-interbank:
+    image: mockserver/mockserver:latest
+    container_name: fintech_mock_interbank
+    ports:
+      - "8080:1080"
+    environment:
+      MOCKSERVER_PROPERTY_FILE: /config/mockserver.properties
+      MOCKSERVER_INITIALIZATION_JSON_PATH: /config/interbank-mocks.json
+    volumes:
+      - ./mocks/interbank-mocks.json:/config/interbank-mocks.json
+      - ./mocks/mockserver.properties:/config/mockserver.properties
+
+volumes:
+  postgres_data:
+  redis_data:
