@@ -1,6 +1,7 @@
 import express from 'express';
 
 const router = express.Router();
+declare const db: any;
 
 router.post('/disbursements', async (req, res) => {
   try {
