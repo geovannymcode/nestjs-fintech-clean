@@ -70,7 +70,7 @@
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:reset": "docker-compose down -v && docker-compose up -d",
-    "db:init": "sleep 5 && docker exec fintech_postgres psql -U fintech_user -d fintech -f /docker-entrypoint-initdb.d/init.sql",
+    "db:init": "sleep 5 && docker exec fintech_postgres psql -U fintech -d fintech -f /docker-entrypoint-initdb.d/init.sql",
     "demo:prepare": "npm run docker:reset && npm run db:init",
     "demo:start": "npm run demo:prepare && npm run start:dev"
   }
