@@ -1,7 +1,8 @@
 import { Module } from '@nestjs/common';
+import { DisbursementModule } from './modules/disbursement/disbursement.module';
 
 @Module({
-  imports: [],
+  imports: [DisbursementModule],
   controllers: [],
   providers: [],
 })
